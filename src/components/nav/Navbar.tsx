@@ -21,7 +21,7 @@ export default function Navbar() {
   return (
     <nav
       ref={navRef}
-      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-all duration-300 [&.nav-scrolled]:backdrop-blur-md [&.nav-scrolled]:bg-black/30 [&.nav-scrolled]:border-b [&.nav-scrolled]:border-white/5"
+      className="fixed top-0 left-0 right-0 z-50 px-6 py-4 transition-colors duration-300 bg-[#0a0a0a]/0 [&.nav-scrolled]:bg-[#0a0a0a]/70 [&.nav-scrolled]:backdrop-blur-md [&.nav-scrolled]:border-b [&.nav-scrolled]:border-white/5"
     >
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <span className="text-sm font-semibold text-text-primary tracking-tight">
