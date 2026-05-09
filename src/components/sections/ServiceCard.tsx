@@ -6,7 +6,10 @@ interface ServiceCardProps {
 
 export default function ServiceCard({ icon, title, description }: ServiceCardProps) {
   return (
-    <div className="p-6 rounded-card border border-border bg-surface hover:border-accent/30 transition-colors duration-300">
+    <div
+      data-service-card
+      className="h-full p-6 rounded-card border border-border bg-surface hover:border-accent/30 transition-colors duration-300"
+    >
       <span className="text-3xl mb-4 block" aria-hidden="true">
         {icon}
       </span>

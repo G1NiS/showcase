@@ -2,6 +2,11 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 
+const SPEED = 0.0007
+const MAX_DIST = 1.8
+const MAX_DIST_SQ = MAX_DIST * MAX_DIST
+const MAX_SEGMENTS = 600
+
 export default function ThreeScene() {
   const mountRef = useRef<HTMLDivElement>(null)
   const mouseRef = useRef({ x: 0, y: 0 })
@@ -11,70 +16,150 @@ export default function ThreeScene() {
     if (!mount) return
 
     const isMobile = window.innerWidth < 640
-    const prefersReducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+    const width = mount.clientWidth || window.innerWidth
+    const height = mount.clientHeight || window.innerHeight
+
+    // Scene + camera
     const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      mount.clientWidth / mount.clientHeight,
-      0.1,
-      1000,
-    )
-    camera.position.z = 3
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    camera.position.z = 4
 
+    // Renderer
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobile })
-    renderer.setSize(mount.clientWidth, mount.clientHeight)
+    renderer.setClearColor(0x000000, 0)
+    renderer.setSize(width, height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     mount.appendChild(renderer.domElement)
 
-    const particleCount = isMobile ? 800 : 2000
-    const geometry = new THREE.BufferGeometry()
-    const positions = new Float32Array(particleCount * 3)
-    for (let i = 0; i < particleCount * 3; i++) {
-      positions[i] = (Math.random() - 0.5) * 10
+    // Particles
+    const count = isMobile ? 70 : 140
+    const pos = new Float32Array(count * 3)
+    const vel = new Float32Array(count * 3)
+
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 9
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 6
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 4
+      vel[i * 3] = (Math.random() - 0.5) * SPEED
+      vel[i * 3 + 1] = (Math.random() - 0.5) * SPEED
+      vel[i * 3 + 2] = (Math.random() - 0.5) * SPEED * 0.4
     }
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
 
-    const material = new THREE.PointsMaterial({
-      color: 0x7c3aed,
-      size: isMobile ? 0.03 : 0.02,
+    const dotGeo = new THREE.BufferGeometry()
+    dotGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+
+    const dotMat = new THREE.PointsMaterial({
+      color: 0x9d6eff,
+      size: isMobile ? 0.07 : 0.055,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
     })
+    const dots = new THREE.Points(dotGeo, dotMat)
+    scene.add(dots)
 
-    const particles = new THREE.Points(geometry, material)
-    scene.add(particles)
+    // Connection lines — pre-allocated buffers
+    const linePos = new Float32Array(MAX_SEGMENTS * 6)
+    const lineCol = new Float32Array(MAX_SEGMENTS * 6)
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const lineGeo = new THREE.BufferGeometry()
+    const linePosAttr = new THREE.BufferAttribute(linePos, 3)
+    linePosAttr.setUsage(THREE.DynamicDrawUsage)
+    const lineColAttr = new THREE.BufferAttribute(lineCol, 3)
+    lineColAttr.setUsage(THREE.DynamicDrawUsage)
+    lineGeo.setAttribute('position', linePosAttr)
+    lineGeo.setAttribute('color', lineColAttr)
+    lineGeo.setDrawRange(0, 0)
+
+    const lineMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 1,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    })
+    const lines = new THREE.LineSegments(lineGeo, lineMat)
+    scene.add(lines)
+
+    // Mouse parallax
+    const onMouseMove = (e: MouseEvent) => {
       mouseRef.current = {
-        x: (e.clientX / window.innerWidth - 0.5) * 0.5,
-        y: (e.clientY / window.innerHeight - 0.5) * 0.5,
+        x: (e.clientX / window.innerWidth - 0.5) * 0.4,
+        y: (e.clientY / window.innerHeight - 0.5) * 0.4,
       }
     }
     if (!isMobile && !prefersReducedMotion) {
-      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mousemove', onMouseMove)
     }
 
-    const handleResize = () => {
-      camera.aspect = mount.clientWidth / mount.clientHeight
+    const onResize = () => {
+      const w = mount.clientWidth
+      const h = mount.clientHeight
+      camera.aspect = w / h
       camera.updateProjectionMatrix()
-      renderer.setSize(mount.clientWidth, mount.clientHeight)
+      renderer.setSize(w, h)
     }
-    window.addEventListener('resize', handleResize)
+    window.addEventListener('resize', onResize)
 
-    const rotationSpeed = prefersReducedMotion ? 0 : 0.0005
+    const maxSegments = isMobile ? 250 : MAX_SEGMENTS
+    const maxDistSq = isMobile ? 1.3 * 1.3 : MAX_DIST_SQ
+
     let animId: number
-
     const animate = () => {
       animId = requestAnimationFrame(animate)
-      particles.rotation.y += rotationSpeed
-      particles.rotation.x += rotationSpeed * 0.4
 
+      if (!prefersReducedMotion) {
+        // Move particles
+        for (let i = 0; i < count; i++) {
+          pos[i * 3] += vel[i * 3]
+          pos[i * 3 + 1] += vel[i * 3 + 1]
+          pos[i * 3 + 2] += vel[i * 3 + 2]
+          if (Math.abs(pos[i * 3]) > 4.5) vel[i * 3] *= -1
+          if (Math.abs(pos[i * 3 + 1]) > 3) vel[i * 3 + 1] *= -1
+          if (Math.abs(pos[i * 3 + 2]) > 2) vel[i * 3 + 2] *= -1
+        }
+        dotGeo.attributes.position.needsUpdate = true
+
+        // Build line segments for pairs within distance threshold
+        let seg = 0
+        for (let a = 0; a < count && seg < maxSegments; a++) {
+          const ax = pos[a * 3], ay = pos[a * 3 + 1], az = pos[a * 3 + 2]
+          for (let b = a + 1; b < count && seg < maxSegments; b++) {
+            const dx = ax - pos[b * 3]
+            const dy = ay - pos[b * 3 + 1]
+            const dz = az - pos[b * 3 + 2]
+            const dSq = dx * dx + dy * dy + dz * dz
+            if (dSq < maxDistSq) {
+              // Fade alpha by squared distance: bright when close, dim when far
+              const t = 1 - dSq / maxDistSq
+              const alpha = t * t * 0.55
+              // Purple tint — matches accent color #7c3aed / #9d6eff
+              const r = 0.48 * alpha
+              const g = 0.22 * alpha
+              const b2 = 0.95 * alpha
+
+              const base = seg * 6
+              linePos[base] = ax;     linePos[base + 1] = ay;         linePos[base + 2] = az
+              linePos[base + 3] = pos[b * 3]; linePos[base + 4] = pos[b * 3 + 1]; linePos[base + 5] = pos[b * 3 + 2]
+              lineCol[base] = r;      lineCol[base + 1] = g;          lineCol[base + 2] = b2
+              lineCol[base + 3] = r;  lineCol[base + 4] = g;          lineCol[base + 5] = b2
+              seg++
+            }
+          }
+        }
+
+        linePosAttr.needsUpdate = true
+        lineColAttr.needsUpdate = true
+        lineGeo.setDrawRange(0, seg * 2)
+      }
+
+      // Camera parallax
       if (!isMobile && !prefersReducedMotion) {
-        camera.position.x += (mouseRef.current.x - camera.position.x) * 0.02
-        camera.position.y += (-mouseRef.current.y - camera.position.y) * 0.02
+        camera.position.x += (mouseRef.current.x - camera.position.x) * 0.025
+        camera.position.y += (-mouseRef.current.y - camera.position.y) * 0.025
         camera.lookAt(scene.position)
       }
 
@@ -84,16 +169,16 @@ export default function ThreeScene() {
 
     return () => {
       cancelAnimationFrame(animId)
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('resize', handleResize)
-      if (mount.contains(renderer.domElement)) {
-        mount.removeChild(renderer.domElement)
-      }
-      geometry.dispose()
-      material.dispose()
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('resize', onResize)
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
+      dotGeo.dispose()
+      dotMat.dispose()
+      lineGeo.dispose()
+      lineMat.dispose()
       renderer.dispose()
     }
   }, [])
 
-  return <div ref={mountRef} className="absolute inset-0 -z-10" />
+  return <div ref={mountRef} className="absolute inset-0 z-0" />
 }
