@@ -28,7 +28,7 @@ export default function Services() {
   const ref = useScrollAnimation('[data-service-card]')
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-24 px-6 bg-bg">
+    <section ref={ref as React.RefObject<HTMLElement>} className="py-24 px-6 bg-gradient-to-b from-bg via-surface/30 to-bg">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight mb-4">
           What I build

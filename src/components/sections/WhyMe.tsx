@@ -24,7 +24,7 @@ export default function WhyMe() {
   const ref = useScrollAnimation('[data-reason]')
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-24 px-6 bg-bg">
+    <section ref={ref as React.RefObject<HTMLElement>} className="py-24 px-6 bg-gradient-to-b from-surface/20 to-bg">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight mb-12">
           Why me

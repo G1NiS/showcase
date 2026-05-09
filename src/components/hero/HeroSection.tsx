@@ -26,6 +26,13 @@ export default function HeroSection() {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-bg">
       <ThreeScene />
+      {/* Atmospheric glow behind headline */}
+      <div className="absolute inset-0 z-[5] pointer-events-none overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-[120px]"
+          style={{ background: 'radial-gradient(ellipse, rgba(124,58,237,0.15) 0%, rgba(124,58,237,0.05) 40%, transparent 70%)' }}
+        />
+      </div>
       <div ref={heroRef} className="relative z-10 text-center px-6 max-w-4xl mx-auto">
         <p
           data-hero

@@ -9,8 +9,14 @@ export default function CtaSection() {
   return (
     <section
       ref={ref as React.RefObject<HTMLElement>}
-      className="py-32 px-6 bg-surface border-t border-border"
+      className="py-32 px-6 relative bg-surface border-t border-border overflow-hidden"
     >
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] blur-[100px] opacity-[0.08]"
+          style={{ background: 'radial-gradient(ellipse, #7c3aed, transparent 70%)' }}
+        />
+      </div>
       <div className="max-w-3xl mx-auto text-center">
         <h2
           data-cta

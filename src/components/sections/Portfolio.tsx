@@ -25,7 +25,13 @@ export default function Portfolio() {
   const ref = useScrollAnimation('[data-project-card]')
 
   return (
-    <section ref={ref as React.RefObject<HTMLElement>} className="py-24 px-6 bg-bg">
+    <section ref={ref as React.RefObject<HTMLElement>} className="py-24 px-6 relative bg-bg overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div
+          className="absolute top-0 right-0 w-[500px] h-[500px] blur-[150px] opacity-[0.06]"
+          style={{ background: 'radial-gradient(circle, #7c3aed, transparent 70%)' }}
+        />
+      </div>
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight mb-4">
           Recent work
