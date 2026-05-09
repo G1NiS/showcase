@@ -50,11 +50,26 @@ export default function ThreeScene() {
     const dotGeo = new THREE.BufferGeometry()
     dotGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
 
+    // Canvas texture for round glowing sphere look
+    const glowCanvas = document.createElement('canvas')
+    glowCanvas.width = 64
+    glowCanvas.height = 64
+    const ctx2d = glowCanvas.getContext('2d')!
+    const grad = ctx2d.createRadialGradient(32, 32, 0, 32, 32, 32)
+    grad.addColorStop(0, 'rgba(200, 160, 255, 1)')
+    grad.addColorStop(0.2, 'rgba(157, 110, 255, 0.8)')
+    grad.addColorStop(0.5, 'rgba(124, 58, 237, 0.3)')
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)')
+    ctx2d.fillStyle = grad
+    ctx2d.fillRect(0, 0, 64, 64)
+    const sphereTexture = new THREE.CanvasTexture(glowCanvas)
+
     const dotMat = new THREE.PointsMaterial({
-      color: 0x9d6eff,
-      size: isMobile ? 0.07 : 0.055,
+      map: sphereTexture,
+      size: isMobile ? 0.22 : 0.18,
+      sizeAttenuation: true,
       transparent: true,
-      opacity: 0.95,
+      opacity: 1,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     })
@@ -174,6 +189,7 @@ export default function ThreeScene() {
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
       dotGeo.dispose()
       dotMat.dispose()
+      sphereTexture.dispose()
       lineGeo.dispose()
       lineMat.dispose()
       renderer.dispose()
