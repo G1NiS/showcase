@@ -12,7 +12,7 @@ const techs = [
 ]
 
 export default function TechStack() {
-  const doubled = [...techs, ...techs]
+  const tripled = [...techs, ...techs, ...techs]
 
   return (
     <section className="py-16 bg-surface overflow-hidden border-y border-border">
@@ -24,9 +24,13 @@ export default function TechStack() {
       <div className="relative overflow-hidden">
         <div
           className="flex whitespace-nowrap w-max"
-          style={{ animation: 'marquee 25s linear infinite' }}
+          style={{
+            animation: 'marquee 25s linear infinite',
+            willChange: 'transform',
+            backfaceVisibility: 'hidden',
+          }}
         >
-          {doubled.map((tech, i) => (
+          {tripled.map((tech, i) => (
             <span
               key={`${tech}-${i}`}
               className="text-text-secondary font-medium text-sm px-4 py-2 border border-border rounded-lg bg-surface-elevated flex-shrink-0 mr-8"
